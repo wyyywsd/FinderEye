@@ -1,0 +1,79 @@
+# Xcode
+.DS_Store
+*/.DS_Store
+*.swp
+*.lock
+*~
+*.xcuserstate
+*.xccheckout
+*.moved-aside
+*.derivedData
+*.hmap
+*.ipa
+*.o
+*.p12
+*.profdata
+*.profraw
+*.log
+*.sqlite
+DerivedData/
+build/
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.pbuser
+!default.pbuser
+!default.mode1v3
+!default.mode2v3
+!default.perspectivev3
+xcuserdata/
+*.xccheckout
+*.xccheckout
+profile
+*.moved-aside
+DerivedData
+.idea/
+*.hmap
+*.ipa
+*.xctest
+*.xctestrun
+*.gcno
+*.gcda
+*.profdata
+*.profraw
+*.log
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.xcresult/
+*.xcresult
+*.xccheckout
+*.xcscmblueprint
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# CocoaPods
+Pods/
+Podfile.lock
+
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Project Specific
+# Exclude design and planning docs
+design.md
+DEV_PLAN.md
+
+# Exclude large model files
+*.mlpackage
+*.mlmodel
+*.pt
+*.pth
+*.onnx
+
+# Other
+.vscode/

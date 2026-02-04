@@ -1,0 +1,6 @@
+ultralytics
+coremltools
+ftfy
+regex
+openai-clip
+numpy<=2.3.5
