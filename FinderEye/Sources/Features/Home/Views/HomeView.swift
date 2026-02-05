@@ -4,9 +4,20 @@ struct HomeView: View {
     // 监听 SettingsManager 以触发语言更新
     @StateObject private var settings = SettingsManager.shared
     
-    @State private var showObjectDetection = false
-    @State private var showTextExtraction = false
-    @State private var selectedSearchMode: ObjectDetectionViewModel.SearchMode = .object
+    // Navigation State
+    enum ActiveSheet: Identifiable {
+        case objectDetection(mode: ObjectDetectionViewModel.SearchMode)
+        case textExtraction
+        
+        var id: String {
+            switch self {
+            case .objectDetection(let mode): return "objectDetection-\(mode.rawValue)"
+            case .textExtraction: return "textExtraction"
+            }
+        }
+    }
+    
+    @State private var activeSheet: ActiveSheet?
     
     var body: some View {
         NavigationView {
@@ -29,11 +40,13 @@ struct HomeView: View {
             }
             .background(Color(UIColor.systemGroupedBackground))
             .navigationBarHidden(true)
-            .fullScreenCover(isPresented: $showObjectDetection) {
-                ObjectDetectionView(initialMode: selectedSearchMode)
-            }
-            .fullScreenCover(isPresented: $showTextExtraction) {
-                TextExtractionView()
+            .fullScreenCover(item: $activeSheet) { item in
+                switch item {
+                case .objectDetection(let mode):
+                    ObjectDetectionView(initialMode: mode)
+                case .textExtraction:
+                    TextExtractionView()
+                }
             }
         }
     }
@@ -57,8 +70,7 @@ struct HomeView: View {
     
     var mainFeatureCard: some View {
         Button(action: {
-            selectedSearchMode = .object
-            showObjectDetection = true
+            activeSheet = .objectDetection(mode: .object)
         }) {
             ZStack(alignment: .bottomLeading) {
                 // Background Gradient
@@ -114,8 +126,7 @@ struct HomeView: View {
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
                 // Feature 1: Text Scanner
                 Button(action: {
-                    selectedSearchMode = .text
-                    showObjectDetection = true
+                    activeSheet = .objectDetection(mode: .text)
                 }) {
                     featureCardContent(
                         icon: "text.viewfinder",
@@ -127,7 +138,7 @@ struct HomeView: View {
                 
                 // Feature 2: Text Extraction
                 Button(action: {
-                    showTextExtraction = true
+                    activeSheet = .textExtraction
                 }) {
                     featureCardContent(
                         icon: "doc.text.viewfinder",

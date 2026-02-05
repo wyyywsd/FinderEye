@@ -165,6 +165,21 @@ final class CameraManager: NSObject, CameraServiceProtocol, ObservableObject {
             session.commitConfiguration()
             return
         }
+        
+        // 配置自动对焦
+        do {
+            try videoDevice.lockForConfiguration()
+            if videoDevice.isFocusModeSupported(.continuousAutoFocus) {
+                videoDevice.focusMode = .continuousAutoFocus
+            }
+            if videoDevice.isSmoothAutoFocusSupported {
+                videoDevice.isSmoothAutoFocusEnabled = true
+            }
+            videoDevice.unlockForConfiguration()
+        } catch {
+            print("Error configuring camera focus: \(error)")
+        }
+        
         session.addInput(videoDeviceInput)
         self.videoDeviceInput = videoDeviceInput
         

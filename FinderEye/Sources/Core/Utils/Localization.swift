@@ -86,6 +86,21 @@ class LocalizationManager {
             "High": "高",
             "Current Threshold": "当前阈值",
             
+            // Performance Settings
+            "Performance Settings": "性能设置",
+            "Scanning FPS": "扫描模式帧率",
+            "Tracking FPS": "追踪模式帧率",
+            "Higher FPS consumes more battery.": "高帧率模式会增加耗电量。",
+            "High Accuracy Mode": "高精度模式",
+            "Uses slicing to detect small objects. Disable to improve performance.": "使用分块技术识别小物体。关闭可提升性能。",
+            
+            // Model Selection
+            "Detection Model": "检测模型",
+            "Model Selection Desc": "大型模型识别更准确，但速度较慢且更耗电。",
+            "ModelType Small": "速度优先 (Small)",
+            "ModelType Medium": "平衡模式 (Medium)",
+            "ModelType Large": "精度优先 (Large)",
+            
             // Common
             "Back": "返回",
             "Done": "完成"
@@ -158,6 +173,21 @@ class LocalizationManager {
             "Low": "Low",
             "High": "High",
             "Current Threshold": "Current Threshold",
+            
+            // Performance Settings
+            "Performance Settings": "Performance Settings",
+            "Scanning FPS": "Scanning FPS",
+            "Tracking FPS": "Tracking FPS",
+            "Higher FPS consumes more battery.": "Higher FPS consumes more battery.",
+            "High Accuracy Mode": "High Accuracy Mode",
+            "Uses slicing to detect small objects. Disable to improve performance.": "Uses slicing to detect small objects. Disable to improve performance.",
+            
+            // Model Selection
+            "Detection Model": "Detection Model",
+            "Model Selection Desc": "Larger models are more accurate but slower.",
+            "ModelType Small": "Speed (Small)",
+            "ModelType Medium": "Balanced (Medium)",
+            "ModelType Large": "Accuracy (Large)",
             
             // Common
             "Back": "Back",

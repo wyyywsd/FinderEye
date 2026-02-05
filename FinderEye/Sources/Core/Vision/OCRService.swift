@@ -74,6 +74,9 @@ final class OCRService: OCRServiceProtocol {
     private func performOCR(with handler: VNImageRequestHandler, keyword: String) async throws -> [RecognitionResult] {
         guard !keyword.isEmpty else { return [] }
         
+        // Get confidence threshold
+        let currentThreshold = await MainActor.run { Float(SettingsManager.shared.confidenceThreshold) }
+        
         return try await withCheckedThrowingContinuation { continuation in
             do {
                 try handler.perform([textRecognitionRequest])
@@ -85,6 +88,9 @@ final class OCRService: OCRServiceProtocol {
                 // 过滤和匹配逻辑
                 let results = observations.compactMap { observation -> RecognitionResult? in
                     guard let topCandidate = observation.topCandidates(1).first else { return nil }
+                    
+                    // Filter by confidence
+                    guard topCandidate.confidence >= currentThreshold else { return nil }
                     
                     let recognizedText = topCandidate.string
                     

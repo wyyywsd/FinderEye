@@ -31,7 +31,7 @@ struct OverlayView: View {
                         // 2. 识别文字标签 (可选，如果文字太小可能看不清，可以仅显示框)
                         // 仅当框的高度足够时才显示标签
                         if rect.height > 15 {
-                            Text(result.text)
+                            Text("\(result.text) \(Int(result.confidence * 100))%")
                                 .font(.system(size: 10, weight: .bold))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 4)

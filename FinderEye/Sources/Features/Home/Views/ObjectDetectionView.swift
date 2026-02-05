@@ -42,6 +42,14 @@ struct ObjectDetectionView: View {
                 viewModel.processStaticImage(image)
             }
         }
+        .onChange(of: viewModel.searchText) { _ in
+            if let image = selectedImage {
+                viewModel.processStaticImage(image)
+            }
+        }
+        .onChange(of: isSearchFocused) { isFocused in
+            viewModel.setEditing(isFocused)
+        }
         .onAppear {
             // 确保模式正确设置
             viewModel.searchMode = initialMode

@@ -50,6 +50,52 @@ class SettingsManager: ObservableObject {
         didSet { UserDefaults.standard.set(textMatchMode.rawValue, forKey: "textMatchMode") }
     }
     
+    // 模型类型设置
+    enum ModelType: String, CaseIterable, Identifiable {
+        case small = "Small"
+        case medium = "Medium"
+        case large = "Large"
+        var id: String { self.rawValue }
+        
+        var fileName: String {
+            switch self {
+            case .small: return "ObjectDetectorS"
+            case .medium: return "ObjectDetectorM"
+            case .large: return "ObjectDetectorL"
+            }
+        }
+        
+        var displayName: String {
+            switch self {
+            case .small: return "ModelType Small".localized
+            case .medium: return "ModelType Medium".localized
+            case .large: return "ModelType Large".localized
+            }
+        }
+    }
+    
+    @Published var modelType: ModelType {
+        didSet { UserDefaults.standard.set(modelType.rawValue, forKey: "modelType") }
+    }
+    
+    // 性能设置：扫描模式帧率 (FPS)
+    // 默认 5 FPS (0.2s 间隔)
+    @Published var scanningFPS: Double {
+        didSet { UserDefaults.standard.set(scanningFPS, forKey: "scanningFPS") }
+    }
+    
+    // 性能设置：追踪模式帧率 (FPS)
+    // 默认 30 FPS (0.033s 间隔)
+    @Published var trackingFPS: Double {
+        didSet { UserDefaults.standard.set(trackingFPS, forKey: "trackingFPS") }
+    }
+    
+    // 性能设置：是否启用高精度分块检测 (High Accuracy / Slicing)
+    // 默认开启，但允许用户关闭以节省性能或避免误检
+    @Published var isHighAccuracyModeEnabled: Bool {
+        didSet { UserDefaults.standard.set(isHighAccuracyModeEnabled, forKey: "isHighAccuracyModeEnabled") }
+    }
+    
     private init() {
         self.isHapticsEnabled = UserDefaults.standard.object(forKey: "isHapticsEnabled") as? Bool ?? true
         self.isSoundEnabled = UserDefaults.standard.object(forKey: "isSoundEnabled") as? Bool ?? false
@@ -63,5 +109,12 @@ class SettingsManager: ObservableObject {
         
         let savedMode = UserDefaults.standard.string(forKey: "textMatchMode") ?? TextMatchMode.wholeLine.rawValue
         self.textMatchMode = TextMatchMode(rawValue: savedMode) ?? .wholeLine
+        
+        let savedModel = UserDefaults.standard.string(forKey: "modelType") ?? ModelType.medium.rawValue
+        self.modelType = ModelType(rawValue: savedModel) ?? .medium
+        
+        self.scanningFPS = UserDefaults.standard.object(forKey: "scanningFPS") as? Double ?? 5.0
+        self.trackingFPS = UserDefaults.standard.object(forKey: "trackingFPS") as? Double ?? 30.0
+        self.isHighAccuracyModeEnabled = UserDefaults.standard.object(forKey: "isHighAccuracyModeEnabled") as? Bool ?? true
     }
 }

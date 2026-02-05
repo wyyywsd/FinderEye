@@ -41,15 +41,79 @@ struct SettingsView: View {
                             .monospacedDigit()
                     }
                     
-                    Slider(value: $settings.confidenceThreshold, in: 0.1...0.9, step: 0.05) {
-                        Text("Confidence Threshold".localized)
+                    Slider(value: $settings.confidenceThreshold, in: 0.1...0.99, step: 0.01) {
+                    Text("Confidence Threshold".localized)
+                } minimumValueLabel: {
+                    Text("Low".localized)
+                } maximumValueLabel: {
+                    Text("High".localized)
+                }
+                }
+                .padding(.vertical, 4)
+                
+                Picker("Detection Model".localized, selection: $settings.modelType) {
+                    ForEach(SettingsManager.ModelType.allCases) { type in
+                        Text(type.displayName).tag(type)
+                    }
+                }
+                .pickerStyle(.menu)
+                
+                Text("Model Selection Desc".localized)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                Toggle(isOn: $settings.isHighAccuracyModeEnabled) {
+                    VStack(alignment: .leading) {
+                        Text("High Accuracy Mode".localized)
+                        Text("Uses slicing to detect small objects. Disable to improve performance.".localized)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            
+            Section(header: Text("Performance Settings".localized)) {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Label("Scanning FPS".localized, systemImage: "waveform.path.ecg")
+                        Spacer()
+                        Text("\(Int(settings.scanningFPS)) FPS")
+                            .foregroundColor(.secondary)
+                            .monospacedDigit()
+                    }
+                    
+                    Slider(value: $settings.scanningFPS, in: 1...30, step: 1) {
+                        Text("Scanning FPS".localized)
                     } minimumValueLabel: {
-                        Text("Low".localized)
+                        Text("1")
                     } maximumValueLabel: {
-                        Text("High".localized)
+                        Text("30")
                     }
                 }
                 .padding(.vertical, 4)
+                
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Label("Tracking FPS".localized, systemImage: "speedometer")
+                        Spacer()
+                        Text("\(Int(settings.trackingFPS)) FPS")
+                            .foregroundColor(.secondary)
+                            .monospacedDigit()
+                    }
+                    
+                    Slider(value: $settings.trackingFPS, in: 10...60, step: 1) {
+                        Text("Tracking FPS".localized)
+                    } minimumValueLabel: {
+                        Text("10")
+                    } maximumValueLabel: {
+                        Text("60")
+                    }
+                }
+                .padding(.vertical, 4)
+                
+                Text("Higher FPS consumes more battery.".localized)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
             
             Section(header: Text("Search Display".localized)) {

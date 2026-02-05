@@ -41,13 +41,69 @@ class ObjectDetectionViewModel: ObservableObject {
     
     // MARK: - Private
     private var cancellables = Set<AnyCancellable>()
-    private var isProcessing = false
+    // private var isProcessing = false // Moved to DetectionState for thread safety
     private var searchTask: Task<Void, Never>?
     
     // Tracking
     private var lastResults: [RecognitionResult] = []
     private var lastFrameTime: TimeInterval = 0
-    private let resultPersistenceTime: TimeInterval = 0.5 // 结果保留 0.5 秒，防止闪烁
+    private let resultPersistenceTime: TimeInterval = 0.1 // 结果保留 0.1 秒，适应高刷新率
+    
+    // Result Fusion for Time-Sliced Detection
+    // 缓存每个切片的检测结果，用于融合
+    // Key: Slice Index (0=Full, 1..5=Slices)
+    private var slicedResultsCache: [Int: [RecognitionResult]] = [:]
+    // 缓存的过期时间 (超过 0.5 秒的切片结果视为失效)
+    private var slicedResultsTimestamps: [Int: TimeInterval] = [:]
+    private let sliceCacheDuration: TimeInterval = 0.5
+    
+    // Dynamic Frame Rate Control
+    private class DetectionState: @unchecked Sendable {
+        private let lock = NSLock()
+        
+        private var _isEditing = false
+        var isEditing: Bool {
+            get { lock.withLock { _isEditing } }
+            set { lock.withLock { _isEditing = newValue } }
+        }
+        
+        private var _hasResults = false
+        var hasResults: Bool {
+            get { lock.withLock { _hasResults } }
+            set { lock.withLock { _hasResults = newValue } }
+        }
+        
+        private var _lastProcessingTime: TimeInterval = 0
+        var lastProcessingTime: TimeInterval {
+            get { lock.withLock { _lastProcessingTime } }
+            set { lock.withLock { _lastProcessingTime = newValue } }
+        }
+        
+        private var _scanningFPS: Double = 5.0
+        var scanningFPS: Double {
+            get { lock.withLock { _scanningFPS } }
+            set { lock.withLock { _scanningFPS = newValue } }
+        }
+        
+        private var _trackingFPS: Double = 30.0
+        var trackingFPS: Double {
+            get { lock.withLock { _trackingFPS } }
+            set { lock.withLock { _trackingFPS = newValue } }
+        }
+        
+        private var _isProcessing = false
+        var isProcessing: Bool {
+            get { lock.withLock { _isProcessing } }
+            set { lock.withLock { _isProcessing = newValue } }
+        }
+        
+        private var _enableHighAccuracy: Bool = true
+        var enableHighAccuracy: Bool {
+            get { lock.withLock { _enableHighAccuracy } }
+            set { lock.withLock { _enableHighAccuracy = newValue } }
+        }
+    }
+    private let detectionState = DetectionState()
     
     // MARK: - Initialization
     init(initialMode: SearchMode = .text,
@@ -59,7 +115,36 @@ class ObjectDetectionViewModel: ObservableObject {
         self.ocrService = ocrService
         self.objectDetectionService = objectDetectionService
         
+        // Initialize FPS and Settings
+        self.detectionState.scanningFPS = SettingsManager.shared.scanningFPS
+        self.detectionState.trackingFPS = SettingsManager.shared.trackingFPS
+        self.detectionState.enableHighAccuracy = SettingsManager.shared.isHighAccuracyModeEnabled
+        
         setupBindings()
+        setupSettingsObservers()
+    }
+    
+    private func setupSettingsObservers() {
+        SettingsManager.shared.$scanningFPS
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] fps in
+                self?.detectionState.scanningFPS = fps
+            }
+            .store(in: &cancellables)
+            
+        SettingsManager.shared.$trackingFPS
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] fps in
+                self?.detectionState.trackingFPS = fps
+            }
+            .store(in: &cancellables)
+            
+        SettingsManager.shared.$isHighAccuracyModeEnabled
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isEnabled in
+                self?.detectionState.enableHighAccuracy = isEnabled
+            }
+            .store(in: &cancellables)
     }
     
     // MARK: - Public Methods
@@ -97,7 +182,10 @@ class ObjectDetectionViewModel: ObservableObject {
             // 如果正在缩放，暂缓识别
             if await MainActor.run(body: { self.isZooming }) { return }
             
-            await MainActor.run { self.isProcessing = true }
+            // 线程安全的状态检查
+            if self.detectionState.isProcessing { return }
+            self.detectionState.isProcessing = true
+            defer { self.detectionState.isProcessing = false }
             
             // 获取当前的搜索词和模式 (MainActor)
             let (currentKeyword, currentMode) = await MainActor.run { (self.searchText, self.searchMode) }
@@ -105,7 +193,6 @@ class ObjectDetectionViewModel: ObservableObject {
             if currentKeyword.isEmpty {
                  await MainActor.run {
                      self.recognitionResults = []
-                     self.isProcessing = false
                  }
                  return
             }
@@ -118,14 +205,14 @@ class ObjectDetectionViewModel: ObservableObject {
                 case .text:
                     newResults = try await ocrService.performOCR(on: cgImage, orientation: orientation, keyword: currentKeyword)
                 case .object:
-                    newResults = try await objectDetectionService.detect(on: cgImage, orientation: orientation, searchKeyword: currentKeyword)
+                    // 使用高精度模式 (切片检测) 处理静态图片，解决户外大场景下小物体漏检问题
+                    newResults = try await objectDetectionService.detectHighAccuracy(on: cgImage, orientation: orientation, searchKeyword: currentKeyword)
                 }
                 
                 if Task.isCancelled { return }
                 
                 await MainActor.run {
                     self.recognitionResults = newResults
-                    self.isProcessing = false
                     
                     if !newResults.isEmpty {
                         self.triggerFeedback()
@@ -134,7 +221,6 @@ class ObjectDetectionViewModel: ObservableObject {
             } catch {
                 if !Task.isCancelled {
                     print("Static Image Processing Error: \(error)")
-                    await MainActor.run { self.isProcessing = false }
                 }
             }
         }
@@ -161,36 +247,61 @@ class ObjectDetectionViewModel: ObservableObject {
         }
     }
     
+    func setEditing(_ isEditing: Bool) {
+        detectionState.isEditing = isEditing
+    }
+    
     // MARK: - Bindings
     
     private func setupBindings() {
         // 订阅相机帧流
         cameraManager.videoOutputPublisher
-            // 优化节流策略：
-            // 1. 降低处理频率：从 200ms (5fps) 调整为 300ms (~3fps)，留出更多 CPU 给 UI 渲染
-            // 2. 确保在后台线程处理，绝对不阻塞主线程
-            .throttle(for: .milliseconds(300), scheduler: DispatchQueue.global(qos: .userInteractive), latest: true)
+            // 移除固定 throttle，改用手动动态帧率控制
             .receive(on: DispatchQueue.global(qos: .userInitiated)) // 确保处理逻辑在后台
             .sink { [weak self] buffer in
-                self?.processFrame(buffer)
+                guard let self = self else { return }
+                
+                // 在后台线程进行准入检查，减少主线程压力
+                let now = Date().timeIntervalSince1970
+                let state = self.detectionState
+                
+                // 1. 如果正在编辑 (键盘弹出)，完全暂停识别，优先保证 UI 响应
+                if state.isEditing { return }
+                
+                // 2. 动态帧率控制
+                // 尊重用户设置的 FPS，即使在高精度模式下也不强制限流
+                let scanningFPS = state.scanningFPS
+                let scanningInterval = 1.0 / max(scanningFPS, 0.1) // 防止除以零
+                let trackingFPS = state.trackingFPS
+                let trackingInterval = 1.0 / max(trackingFPS, 0.1)
+                let targetInterval = state.hasResults ? trackingInterval : scanningInterval
+                
+                // print("DEBUG: FPS Check - Scanning: \(scanningFPS), Tracking: \(trackingFPS), HasResults: \(state.hasResults), TargetInterval: \(targetInterval)")
+                
+                if now - state.lastProcessingTime < targetInterval {
+                    return
+                }
+                
+                // 3. 并发限制 (线程安全)
+                if state.isProcessing { return }
+                state.isProcessing = true
+                
+                state.lastProcessingTime = now
+                
+                self.processFrame(buffer)
             }
             .store(in: &cancellables)
     }
     
     private func processFrame(_ buffer: CMSampleBuffer) {
-        // 快速检查：如果没有搜索词，直接跳过，不做任何耗时操作
-        // 注意：这里访问 searchText 需要线程安全，或者仅在改变时更新一个 atomic 变量
-        // 为简化，我们在 Task 内部再次检查，但这里先做个预判会更好。
-        // 由于 searchText 是 @Published 且在主线程更新，直接访问可能不安全。
-        // 更好的做法是：processFrame 仅负责丢进 Task，逻辑在 Task 内处理。
-        
-        guard !isProcessing else { return }
-        
         // 引用计数 +1，保持 buffer 有效直到处理完成
         // CMSampleBuffer 是 Core Foundation 对象，Swift 自动管理引用，但跨线程时需小心
         
         Task { [weak self] in
             guard let self = self else { return }
+            
+            // 确保任务结束时重置标志位
+            defer { self.detectionState.isProcessing = false }
             
             // 在 MainActor 获取当前状态，避免数据竞争
             let currentState = await MainActor.run { (self.searchText, self.searchMode, self.isZooming) }
@@ -210,12 +321,8 @@ class ObjectDetectionViewModel: ObservableObject {
                  return
             }
             
-            if self.isProcessing { return }
-            self.isProcessing = true
-            
             // 获取 Buffer 尺寸
             guard let pixelBuffer = CMSampleBufferGetImageBuffer(buffer) else {
-                self.isProcessing = false
                 return
             }
             
@@ -236,24 +343,108 @@ class ObjectDetectionViewModel: ObservableObject {
                 switch currentMode {
                 case .text:
                     newResults = try await ocrService.performOCR(on: pixelBuffer, keyword: currentKeyword)
+                    // Text mode doesn't use slicing cache yet
+                    await MainActor.run {
+                        self.updateResults(newResults)
+                    }
+                    
                 case .object:
-                    newResults = try await objectDetectionService.detect(on: pixelBuffer, searchKeyword: currentKeyword)
-                }
-                
-                await MainActor.run {
-                    self.updateResults(newResults)
-                    self.isProcessing = false
+                    // 检查是否启用高精度分块检测
+                    if self.detectionState.enableHighAccuracy {
+                        // 使用分时切片检测 (Time-Sliced Detection)
+                        // 每次只跑 1 次推理，极大提升 FPS
+                        let (partialResults, sliceIndex) = try await objectDetectionService.detectTimeSliced(on: pixelBuffer, searchKeyword: currentKeyword)
+                        
+                        await MainActor.run {
+                            // 1. 更新缓存
+                            let now = Date().timeIntervalSince1970
+                            self.slicedResultsCache[sliceIndex] = partialResults
+                            self.slicedResultsTimestamps[sliceIndex] = now
+                            
+                            // 2. 清理过期缓存
+                            for (idx, timestamp) in self.slicedResultsTimestamps {
+                                if now - timestamp > self.sliceCacheDuration {
+                                    self.slicedResultsCache.removeValue(forKey: idx)
+                                    self.slicedResultsTimestamps.removeValue(forKey: idx)
+                                }
+                            }
+                            
+                            // 3. 融合结果 (Merge)
+                            var allCachedResults: [RecognitionResult] = []
+                            for (_, results) in self.slicedResultsCache {
+                                allCachedResults.append(contentsOf: results)
+                            }
+                            
+                            // 4. 客户端去重 (NMS)
+                            let merged = self.mergeCachedResults(allCachedResults)
+                            self.updateResults(merged)
+                        }
+                    } else {
+                        // 仅使用全图检测 (无切片，性能最高)
+                        newResults = try await objectDetectionService.detect(on: pixelBuffer, searchKeyword: currentKeyword)
+                        
+                        // 清空切片缓存，避免切换模式后残留
+                        await MainActor.run {
+                            if !self.slicedResultsCache.isEmpty {
+                                self.slicedResultsCache.removeAll()
+                                self.slicedResultsTimestamps.removeAll()
+                            }
+                            self.updateResults(newResults)
+                        }
+                    }
                 }
             } catch {
                 print("Vision Processing Error: \(error)")
-                self.isProcessing = false
             }
         }
+    }
+    
+    // MARK: - Private Methods
+    
+    /// 简单的客户端结果合并 (解决分时检测导致的重叠)
+    private func mergeCachedResults(_ results: [RecognitionResult]) -> [RecognitionResult] {
+        if results.isEmpty { return [] }
+        if results.count == 1 { return results }
+        
+        // 按置信度排序
+        let sorted = results.sorted { $0.confidence > $1.confidence }
+        var selected: [RecognitionResult] = []
+        
+        for item in sorted {
+            // 检查是否与已选结果严重重叠
+            var isRedundant = false
+            for exist in selected {
+                let iou = calculateIOU(item.boundingBox, exist.boundingBox)
+                // 如果 IOU > 0.45 且标签相同（或非常相似），视为同一个
+                // 这里我们简化：只要位置重叠大，就抑制低置信度的
+                if iou > 0.45 {
+                    isRedundant = true
+                    break
+                }
+            }
+            
+            if !isRedundant {
+                selected.append(item)
+            }
+        }
+        return selected
+    }
+    
+    private func calculateIOU(_ rect1: CGRect, _ rect2: CGRect) -> CGFloat {
+        let intersection = rect1.intersection(rect2)
+        if intersection.isNull { return 0 }
+        let intersectionArea = intersection.width * intersection.height
+        let unionArea = rect1.width * rect1.height + rect2.width * rect2.height - intersectionArea
+        if unionArea <= 0 { return 0 }
+        return intersectionArea / unionArea
     }
     
     /// 平滑更新结果，防止闪烁
     private func updateResults(_ newResults: [RecognitionResult]) {
         let now = Date().timeIntervalSince1970
+        
+        // 同步状态给后台线程
+        detectionState.hasResults = !newResults.isEmpty
         
         if !newResults.isEmpty {
             // 有新结果，直接更新并记录时间
