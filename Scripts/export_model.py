@@ -42,7 +42,7 @@ def export_model_variant_direct(model_name, output_path):
     base_objects = [
         # --- People & Demographics ---
         "person", "man", "woman", "child", "boy", "girl", "baby", "elderly person",
-        "face", "head", "hand", "foot",
+        "face", "head", "eye", "hand", "foot",
         
         # --- Transport & Vehicles ---
         "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat",
@@ -82,8 +82,9 @@ def export_model_variant_direct(model_name, output_path):
         # --- Furniture & Home ---
         "chair", "couch", "potted plant", "bed", "dining table", "toilet", "tv",
         "desk", "sofa", "armchair", "stool", "cabinet", "shelf", "wardrobe",
-        "lamp", "mirror", "carpet", "curtain", "pillow", "blanket", "towel",
-        "trash can", "box", "basket", "clock", "vase",
+        "lamp", "mirror", "carpet", "curtain", "door handle", "door knob",
+        "pillow", "blanket", "towel", "trash can", "box", "basket", "clock", "vase",
+        "outlet", "power strip", "garbage bag",
         
         # --- Electronics & Gadgets ---
         "laptop", "mouse", "remote", "keyboard", "cell phone", "tablet", "monitor",
@@ -117,6 +118,8 @@ def export_model_variant_direct(model_name, output_path):
         # --- Bathroom & Personal Care ---
         "toothbrush", "toothpaste", "soap", "shampoo", "conditioner", "comb", "hairbrush", "razor", 
         "bathtub", "shower", "toilet paper", "towel rack",
+        "cosmetics", "lipstick", "perfume", "fragrance", "foundation", "makeup brush", "nail polish",
+        "body wash", "facial cleanser", "hand cream", "lotion", "cream", "hair clip", "nail clippers",
 
         # --- Bedroom & Bedding ---
         "mattress", "sheet", "quilt", "duvet", "nightstand",

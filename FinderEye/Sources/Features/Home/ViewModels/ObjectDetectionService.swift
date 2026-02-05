@@ -737,8 +737,8 @@ final class ObjectDetectionService {
 
     /// 过滤实时流中的伪影 (边缘误检 + 过小物体)
     private static func filterRealTimeArtifacts(_ results: [RecognitionResult]) -> [RecognitionResult] {
-        let edgeMargin: CGFloat = 0.02 // 边缘保留区 2%
-        let minSize: CGFloat = 0.03    // 最小尺寸 3% (过滤噪点)
+        let edgeMargin: CGFloat = 0.01 // 边缘保留区 1% (Optimization: Reduced from 2%)
+        let minSize: CGFloat = 0.01    // 最小尺寸 1% (Optimization: Reduced from 3% to detect smaller objects)
         
         return results.filter { result in
             let box = result.boundingBox

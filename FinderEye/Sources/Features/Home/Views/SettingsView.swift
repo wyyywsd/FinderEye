@@ -36,12 +36,12 @@ struct SettingsView: View {
                     HStack {
                         Label("Confidence Threshold".localized, systemImage: "eye")
                         Spacer()
-                        Text("\(Int(settings.confidenceThreshold * 100))%")
+                        Text(String(format: "%.1f%%", settings.confidenceThreshold * 100))
                             .foregroundColor(.secondary)
                             .monospacedDigit()
                     }
                     
-                    Slider(value: $settings.confidenceThreshold, in: 0.1...0.99, step: 0.01) {
+                    Slider(value: $settings.confidenceThreshold, in: 0.001...0.99, step: 0.001) {
                     Text("Confidence Threshold".localized)
                 } minimumValueLabel: {
                     Text("Low".localized)

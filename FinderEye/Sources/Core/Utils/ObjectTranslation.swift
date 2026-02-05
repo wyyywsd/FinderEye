@@ -13,6 +13,7 @@ struct ObjectTranslation {
         "老人": "elderly person", "老奶奶": "elderly person", "老爷爷": "elderly person",
         "脸": "face", "人脸": "face", "脸蛋": "face",
         "头": "head", "脑袋": "head", "人头": "head", "头部": "head",
+        "眼球": "eye", "眼睛": "eye", "眼珠": "eye",
         "手": "hand", "小手": "hand",
         "脚": "foot", "小脚": "foot", "脚丫": "foot",
         
@@ -192,6 +193,7 @@ struct ObjectTranslation {
         "镜子": "mirror",
         "地毯": "carpet",
         "窗帘": "curtain",
+        "门把手": "door handle", "把手": "handle", "拉手": "handle", "门柄": "door knob",
         "枕头": "pillow",
         "毯子": "blanket", "被子": "blanket",
         "毛巾": "towel",
@@ -304,6 +306,10 @@ struct ObjectTranslation {
         "泰迪熊": "teddy bear", "玩偶": "teddy bear", "毛绒玩具": "teddy bear", "公仔": "teddy bear",
         "气球": "balloon",
         "旗帜": "flag", "国旗": "flag",
+        "日用品": "daily necessities",
+        "指甲刀": "nail clippers", "指甲剪": "nail clippers",
+        "插座": "outlet", "插排": "power strip", "排插": "power strip",
+        "垃圾袋": "garbage bag",
         
         // MARK: - Bathroom & Personal Care
         "牙刷": "toothbrush",
@@ -318,6 +324,17 @@ struct ObjectTranslation {
         "淋浴": "shower", "花洒": "shower",
         "卫生纸": "toilet paper", "卷纸": "toilet paper", "手纸": "toilet paper",
         "毛巾架": "towel rack",
+        "护手霜": "hand cream", "润肤霜": "lotion", "面霜": "cream",
+        "化妆品": "cosmetics", "彩妆": "cosmetics",
+        "口红": "lipstick", "唇膏": "lipstick",
+        "香水": "perfume", "香氛": "fragrance",
+        "粉底": "foundation", "粉底液": "foundation",
+        "眉笔": "eyebrow pencil",
+        "化妆刷": "makeup brush",
+        "指甲油": "nail polish",
+        "沐浴露": "body wash", "沐浴液": "body wash",
+        "洗面奶": "facial cleanser",
+        "发夹": "hair clip", "发卡": "hair clip",
         
         // MARK: - Bedroom & Bedding
         "床垫": "mattress",
