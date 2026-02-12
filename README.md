@@ -212,3 +212,4 @@ The export script will:
 ## 📝 License
 
 Copyright © 2026 FinderEye. All rights reserved.
+
