@@ -1,85 +1,160 @@
-# FinderEye
+<div align="center">
 
-**FinderEye** is an intelligent iOS application that transforms your camera into a powerful search engine for the physical world. It combines real-time **Optical Character Recognition (OCR)** with offline **Open-Vocabulary Object Detection** to help users find text and objects instantly.
+# 🔍 FinderEye
 
-Designed with a minimalist aesthetic and a privacy-first approach, FinderEye operates entirely on-device, making it fast, secure, and capable of working without an internet connection.
+**Transform your camera into a powerful search engine for the physical world.**
+
+[![Platform](https://img.shields.io/badge/Platform-iOS%2017.0+-blue?style=flat-square&logo=apple)](https://developer.apple.com/ios/)
+[![Swift](https://img.shields.io/badge/Swift-5.9+-F05138?style=flat-square&logo=swift&logoColor=white)](https://swift.org/)
+[![SwiftUI](https://img.shields.io/badge/UI-SwiftUI-0071E3?style=flat-square&logo=swift&logoColor=white)](https://developer.apple.com/xcode/swiftui/)
+[![Core ML](https://img.shields.io/badge/ML-Core%20ML-34C759?style=flat-square&logo=apple&logoColor=white)](https://developer.apple.com/machine-learning/core-ml/)
+[![YOLO-World](https://img.shields.io/badge/Model-YOLO--World-FF6F00?style=flat-square)](https://github.com/AILab-CVC/YOLO-World)
+[![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-lightgrey?style=flat-square)](#-license)
+
+**English** | [中文](README_CN.md)
+
+</div>
+
+---
+
+## 📖 About
+
+**FinderEye** is an intelligent iOS application that combines real-time **Optical Character Recognition (OCR)** with offline **Open-Vocabulary Object Detection**, helping users instantly find text and objects through their camera.
+
+Built with a minimalist aesthetic and a **privacy-first** approach, all processing runs entirely on-device — fast, secure, and fully functional without an internet connection.
+
+---
 
 ## ✨ Features
 
-- **Real-time Search**: Instantly detect and highlight text and objects in the camera view.
-- **Text Extraction**: Extract full text from photos/camera with layout preservation.
-- **Perspective Crop**: Correct skewed documents using 4-corner perspective correction.
-- **Offline AI**: Powered by a custom **YOLO-World** model running on Core ML for open-vocabulary detection.
-- **Smart Translation**: Supports natural language queries in Chinese (e.g., "红色的杯子" maps to "red cup", "穿白衣的人" maps to "person in white").
-- **Minimalist UI**: Distraction-free interface with haptic feedback and fluid animations.
-- **Privacy First**: No data leaves your device; all processing is local.
+| Feature | Description |
+|:--------|:------------|
+| **🔎 Real-time Search** | Instantly detect and highlight text & objects in the camera view |
+| **📝 Text Extraction** | Extract full text from photos/camera with layout preservation |
+| **📐 Perspective Crop** | Correct skewed documents using 4-corner perspective transformation |
+| **🤖 Offline AI** | Powered by custom **YOLO-World** model running on **Core ML** |
+| **🌐 Smart Translation** | Natural language queries in Chinese (e.g., `红色的杯子` → `red cup`) |
+| **🎨 Minimalist UI** | Distraction-free interface with haptic feedback and fluid animations |
+| **🔒 Privacy First** | Zero network requests — all processing stays on your device |
+
+---
 
 ## 🛠 Tech Stack
 
-- **Platform**: iOS 17.0+
-- **Language**: Swift 5.9+
-- **Frameworks**:
-  - **SwiftUI**: Modern, declarative user interface.
-  - **Combine**: Reactive data flow for camera and search events.
-  - **AVFoundation**: High-performance camera stream capture.
-  - **Vision Framework**: Accurate text recognition (OCR).
-  - **Core Image**: Image perspective correction using `CIPerspectiveCorrection`.
-  - **Core ML**: On-device machine learning inference.
-- **Machine Learning**:
-  - **Model**: YOLO-World (Real-time Open-Vocabulary Object Detection).
-  - **Export Tool**: Python, Ultralytics, CoreMLTools.
+<table>
+<tr>
+<td><b>Category</b></td>
+<td><b>Technology</b></td>
+</tr>
+<tr>
+<td><b>Platform</b></td>
+<td><img src="https://img.shields.io/badge/iOS-17.0+-000000?style=flat-square&logo=apple&logoColor=white" alt="iOS 17.0+"></td>
+</tr>
+<tr>
+<td><b>Language</b></td>
+<td><img src="https://img.shields.io/badge/Swift-5.9+-F05138?style=flat-square&logo=swift&logoColor=white" alt="Swift 5.9+"></td>
+</tr>
+<tr>
+<td><b>UI Framework</b></td>
+<td><img src="https://img.shields.io/badge/SwiftUI-Declarative%20UI-0071E3?style=flat-square&logo=swift&logoColor=white" alt="SwiftUI"></td>
+</tr>
+<tr>
+<td><b>Reactive</b></td>
+<td><img src="https://img.shields.io/badge/Combine-Data%20Flow-8E44AD?style=flat-square&logo=apple&logoColor=white" alt="Combine"></td>
+</tr>
+<tr>
+<td><b>Camera</b></td>
+<td><img src="https://img.shields.io/badge/AVFoundation-Camera%20Capture-FF9500?style=flat-square&logo=apple&logoColor=white" alt="AVFoundation"></td>
+</tr>
+<tr>
+<td><b>OCR</b></td>
+<td><img src="https://img.shields.io/badge/Vision-Text%20Recognition-5856D6?style=flat-square&logo=apple&logoColor=white" alt="Vision"></td>
+</tr>
+<tr>
+<td><b>Image Processing</b></td>
+<td><img src="https://img.shields.io/badge/Core%20Image-Perspective%20Correction-30B0C7?style=flat-square&logo=apple&logoColor=white" alt="Core Image"></td>
+</tr>
+<tr>
+<td><b>ML Inference</b></td>
+<td><img src="https://img.shields.io/badge/Core%20ML-On--Device%20ML-34C759?style=flat-square&logo=apple&logoColor=white" alt="Core ML"></td>
+</tr>
+<tr>
+<td><b>ML Model</b></td>
+<td><img src="https://img.shields.io/badge/YOLO--World-Open%20Vocabulary%20Detection-FF6F00?style=flat-square" alt="YOLO-World"></td>
+</tr>
+<tr>
+<td><b>Model Export</b></td>
+<td><img src="https://img.shields.io/badge/Python-Ultralytics%20%7C%20CoreMLTools-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python"></td>
+</tr>
+</table>
 
-## 📂 Project Structure
+---
+
+## 🏗 Architecture
+
+The project follows **MVVM** architecture with a clean modular structure:
 
 ```
 FinderEye/
-├── FinderEye/               # App Source Code Directory
+├── FinderEye/                    # App Source Code
 │   ├── Sources/
-│   │   ├── App/             # App Entry Point (FinderEyeApp.swift)
-│   │   ├── Core/            # Core Services and Utilities
-│   │   │   ├── Camera/      # Camera Management (AVFoundation)
-│   │   │   ├── Vision/      # OCR Service (Vision Framework)
-│   │   │   └── Utils/       # Geometry, Translation, Settings
-│   │   ├── Features/        # Feature Modules
-│   │   │   └── Home/        # Main Camera Interface (MVVM)
-│   │   └── Models/          # Data Models and Resources
-│   │       └── Resources/   # Core ML Model Files (.mlpackage)
-│   └── App-Info.plist       # App Configuration
-├── Scripts/                 # Python Scripts for Model Management
-├── docs/                    # Documentation
-└── requirements.txt         # Python Dependencies
+│   │   ├── App/                  # App Entry Point (FinderEyeApp.swift)
+│   │   ├── Core/                 # Core Services & Utilities
+│   │   │   ├── Camera/           #   └─ Camera Management (AVFoundation)
+│   │   │   ├── Vision/           #   └─ OCR Service (Vision Framework)
+│   │   │   └── Utils/            #   └─ Geometry, Translation, Settings
+│   │   ├── Features/             # Feature Modules
+│   │   │   └── Home/             #   └─ Main Camera Interface (MVVM)
+│   │   │       ├── ViewModels/   #       └─ Detection & OCR ViewModels
+│   │   │       └── Views/        #       └─ SwiftUI Views & Overlays
+│   │   └── Models/               # Data Models & Resources
+│   │       └── Resources/        #   └─ Core ML Models (.mlpackage)
+│   └── App-Info.plist            # App Configuration
+├── Scripts/                      # Python Scripts for Model Export
+├── docs/                         # Documentation (EN / CN)
+├── requirements.txt              # Python Dependencies
+└── FinderEye.xcodeproj           # Xcode Project
 ```
+
+---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- **Xcode 15.0+**
-- **iOS Device** running iOS 17.0+ (Camera features do not work on Simulator)
-- **Python 3.12+** (Only required for model updates)
+| Requirement | Version |
+|:------------|:--------|
+| **Xcode** | 15.0+ |
+| **iOS Device** | iOS 17.0+ (Camera requires a physical device) |
+| **Python** | 3.12+ *(only for model export)* |
 
-### Installation & Running
+### Installation
 
-1.  **Open Project**:
-    - Double-click `FinderEye/FinderEye.xcodeproj` in the root directory.
+```bash
+# 1. Clone the repository
+git clone https://github.com/your-username/FinderEye.git
+cd FinderEye
 
-2.  **Configure Signing**:
-    - Select the `FinderEye` project root in Xcode.
-    - Select `FinderEye` Target -> **Signing & Capabilities**.
-    - Select your **Team** to enable signing.
+# 2. Open in Xcode
+open FinderEye.xcodeproj
+```
 
-3.  **Run**:
-    - Connect your iPhone.
-    - Select your device in Xcode.
-    - Build and Run (**Cmd + R**).
+**Then in Xcode:**
 
-> **Note**: The app will request camera permissions on first run. Please allow it to use real-time detection features.
+1. Select `FinderEye` Target → **Signing & Capabilities** → choose your **Team**
+2. Connect your iPhone and select it as the run destination
+3. Build and Run (**⌘ + R**)
 
-## 🧠 Model Management & Export
+> [!NOTE]
+> The app will request camera permissions on first launch. Please allow it to enable real-time detection.
 
-The app uses a YOLO-World model that has been optimized and exported to Core ML. You can customize the recognized objects (vocabulary) using the provided scripts.
+---
 
-### 1. Setup Python Environment
+## 🧠 Model Management
+
+FinderEye uses **YOLO-World** models exported to **Core ML** format. You can customize the detection vocabulary using the provided Python scripts.
+
+### Setup & Export
 
 ```bash
 # Create virtual environment
@@ -88,34 +163,44 @@ source venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
-```
 
-### 2. Customize Vocabulary
-
-Open `Scripts/export_model.py` and modify the `common_objects` list or the color combinations.
-
-```python
-# Example: Adding a new object
-common_objects = [
-    "person", "bicycle", "car", ..., "new_object_name"
-]
-```
-
-**Note**: If you add new objects, remember to update the Chinese mapping in `FinderEye/Sources/Core/Utils/ObjectTranslation.swift` to support searching for them in Chinese.
-
-### 3. Export Model
-
-Run the export script to generate a new Core ML model:
-
-```bash
+# Export model (downloads base model if needed)
 python3 Scripts/export_model.py
 ```
 
-This will:
-1.  Download the base YOLO-World model (if needed).
-2.  Embed the custom vocabulary (classes).
-3.  Export the model to `FinderEye/Sources/Models/Resources/ObjectDetector.mlpackage`.
-4.  Automatically replace the old model in the source directory.
+### Customize Vocabulary
+
+Edit `Scripts/export_model.py` to modify the `base_objects` list:
+
+```python
+base_objects = [
+    "person", "bicycle", "car", ..., "your_new_object"
+]
+```
+
+> [!IMPORTANT]
+> After adding new objects, update the Chinese mapping in `FinderEye/Sources/Core/Utils/ObjectTranslation.swift` to support Chinese search queries.
+
+The export script will:
+1. Download the base YOLO-World model (if needed)
+2. Embed the custom vocabulary
+3. Export to `FinderEye/Sources/Models/Resources/ObjectDetector.mlpackage`
+4. Automatically replace the old model
+
+---
+
+## 🗺 Roadmap
+
+- [x] Real-time OCR text search
+- [x] Open-vocabulary object detection
+- [x] Chinese natural language query support
+- [x] Document perspective correction
+- [ ] Multi-language query support
+- [ ] Detection history & favorites
+- [ ] iPad optimization
+- [ ] Widget support
+
+---
 
 ## 📝 License
 
