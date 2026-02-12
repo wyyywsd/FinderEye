@@ -21,6 +21,7 @@ class ObjectDetectionViewModel: ObservableObject {
     @Published var searchMode: SearchMode = .text // 默认为文字搜索
     @Published var currentZoomFactor: CGFloat = 1.0 // 相机变焦
     @Published var isZooming: Bool = false // 是否正在缩放 (用于暂停识别以提升性能)
+    @Published var keywordWarning: String? = nil // 不支持的关键词提示
     
     // 预设的常用物品提示词
     let commonObjectPrompts = ["杯子", "手机", "键盘", "鼠标", "水瓶", "书", "人", "猫", "狗", "电脑", "椅子", "背包"]
@@ -193,8 +194,25 @@ class ObjectDetectionViewModel: ObservableObject {
             if currentKeyword.isEmpty {
                  await MainActor.run {
                      self.recognitionResults = []
+                     self.keywordWarning = nil
                  }
                  return
+            }
+            
+            // 物品模式下校验关键词是否被模型支持
+            if currentMode == .object {
+                let warning = ObjectTranslation.validateKeyword(currentKeyword)
+                await MainActor.run {
+                    self.keywordWarning = warning
+                }
+                if warning != nil {
+                    await MainActor.run { self.recognitionResults = [] }
+                    return
+                }
+            } else {
+                await MainActor.run {
+                    if self.keywordWarning != nil { self.keywordWarning = nil }
+                }
             }
             
             // 在后台线程执行耗时操作
@@ -317,8 +335,27 @@ class ObjectDetectionViewModel: ObservableObject {
                      if !self.recognitionResults.isEmpty {
                          self.recognitionResults = []
                      }
+                     self.keywordWarning = nil
                  }
                  return
+            }
+            
+            // 物品模式下校验关键词是否被模型支持
+            if currentMode == .object {
+                let warning = ObjectTranslation.validateKeyword(currentKeyword)
+                await MainActor.run {
+                    self.keywordWarning = warning
+                }
+                if warning != nil {
+                    await MainActor.run {
+                        self.recognitionResults = []
+                    }
+                    return
+                }
+            } else {
+                await MainActor.run {
+                    if self.keywordWarning != nil { self.keywordWarning = nil }
+                }
             }
             
             // 获取 Buffer 尺寸

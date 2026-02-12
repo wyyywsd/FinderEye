@@ -8,11 +8,13 @@ struct HomeView: View {
     enum ActiveSheet: Identifiable {
         case objectDetection(mode: ObjectDetectionViewModel.SearchMode)
         case textExtraction
+        case smartCounter
         
         var id: String {
             switch self {
             case .objectDetection(let mode): return "objectDetection-\(mode.rawValue)"
             case .textExtraction: return "textExtraction"
+            case .smartCounter: return "smartCounter"
             }
         }
     }
@@ -46,6 +48,8 @@ struct HomeView: View {
                     ObjectDetectionView(initialMode: mode)
                 case .textExtraction:
                     TextExtractionView()
+                case .smartCounter:
+                    SmartCounterView()
                 }
             }
         }
@@ -145,6 +149,18 @@ struct HomeView: View {
                         title: "Extract Text".localized,
                         subtitle: "OCR from Image".localized,
                         color: .green
+                    )
+                }
+                
+                // Feature 3: Smart Counter
+                Button(action: {
+                    activeSheet = .smartCounter
+                }) {
+                    featureCardContent(
+                        icon: "number.square",
+                        title: "Smart Counter".localized,
+                        subtitle: "Count objects in scene".localized,
+                        color: .purple
                     )
                 }
             }

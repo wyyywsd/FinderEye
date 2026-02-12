@@ -9,7 +9,7 @@ struct CameraPicker: UIViewControllerRepresentable {
         let picker = UIImagePickerController()
         picker.sourceType = .camera
         picker.delegate = context.coordinator
-        picker.allowsEditing = true
+        picker.allowsEditing = false // Disable square crop enforcement
         return picker
     }
     
@@ -27,9 +27,9 @@ struct CameraPicker: UIViewControllerRepresentable {
         }
         
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-            if let image = info[.editedImage] as? UIImage {
+            if let image = info[.originalImage] as? UIImage {
                 parent.selectedImage = image
-            } else if let image = info[.originalImage] as? UIImage {
+            } else if let image = info[.editedImage] as? UIImage {
                 parent.selectedImage = image
             }
             parent.presentationMode.wrappedValue.dismiss()

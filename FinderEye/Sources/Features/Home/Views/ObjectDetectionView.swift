@@ -227,6 +227,26 @@ struct ObjectDetectionView: View {
                 }
                 .padding(.horizontal, 16)
                 
+                // 不支持的关键词提示
+                if let warning = viewModel.keywordWarning {
+                    HStack(spacing: 6) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 12))
+                        Text(warning)
+                            .font(.system(size: 13, weight: .medium))
+                            .lineLimit(2)
+                    }
+                    .foregroundColor(.orange)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(8)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 4)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                    .animation(.easeInOut(duration: 0.2), value: viewModel.keywordWarning)
+                }
+                
                 Spacer()
             }
             .ignoresSafeArea(.keyboard) // Prevent layout shift when keyboard appears

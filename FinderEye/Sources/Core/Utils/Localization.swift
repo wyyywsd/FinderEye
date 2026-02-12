@@ -42,6 +42,17 @@ class LocalizationManager {
             "Extracting Text...": "正在提取文字...",
             "Extracted Text": "提取结果",
             "No text found in the image.": "未在图片中发现文字",
+            
+            // Smart Counter
+            "Smart Counter": "智能计数器",
+            "Count objects in scene": "统计场景中物品数量",
+            "Take a photo or choose from album to count objects": "拍照或从相册选择图片以统计物品",
+            "Statistics:": "统计结果:",
+            "Analyzing...": "正在分析...",
+            "No objects detected.": "未检测到物品。",
+            "Album": "相册",
+            "Clear": "清除",
+            
             "Error": "错误",
             "Close": "关闭",
             "Recent": "最近记录",
@@ -51,6 +62,7 @@ class LocalizationManager {
             "Object Search": "物品搜索",
             "Return to Camera": "返回相机",
             "Enter search keyword": "输入搜索内容",
+            " is not supported by the current model": " 不在当前模型支持范围内",
             
             // Profile
             "Profile": "我的",
@@ -139,6 +151,7 @@ class LocalizationManager {
             "Object Search": "Object Search",
             "Return to Camera": "Return to Camera",
             "Enter search keyword": "Enter search keyword",
+            " is not supported by the current model": " is not supported by the current model",
             
             // Profile
             "Profile": "Profile",

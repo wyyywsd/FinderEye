@@ -503,6 +503,18 @@ final class ObjectDetectionService {
     /// 解决 16:9 图片被强行压缩到 1:1 模型输入导致的形变问题
     private func letterbox(image: CIImage, targetSize: CGSize) -> LetterboxInfo {
         let originalSize = image.extent.size
+        
+        // 关键修复：CIImage.cropped(to:) 后 extent.origin 不是 (0,0)
+        // 必须先将图片平移到原点，否则后续的 scale + translate 会基于错误的坐标
+        let originX = image.extent.origin.x
+        let originY = image.extent.origin.y
+        let normalizedImage: CIImage
+        if originX != 0 || originY != 0 {
+            normalizedImage = image.transformed(by: CGAffineTransform(translationX: -originX, y: -originY))
+        } else {
+            normalizedImage = image
+        }
+        
         // 计算缩放比例 (Fit)
         let scale = min(targetSize.width / originalSize.width, targetSize.height / originalSize.height)
         
@@ -514,8 +526,7 @@ final class ObjectDetectionService {
         let offsetY = (targetSize.height - newHeight) / 2.0
         
         // 1. 缩放 + 平移
-        // 注意：CIImage 变换原点
-        let scaledImage = image
+        let scaledImage = normalizedImage
             .transformed(by: CGAffineTransform(scaleX: scale, y: scale))
             .transformed(by: CGAffineTransform(translationX: offsetX, y: offsetY))
         
@@ -523,8 +534,10 @@ final class ObjectDetectionService {
         let background = CIImage(color: CIColor(red: 114/255, green: 114/255, blue: 114/255))
             .cropped(to: CGRect(origin: .zero, size: targetSize))
         
-        // 3. 合成 (SourceOver)
+        // 3. 合成 (SourceOver) 并裁剪到目标尺寸
+        // composited(over:) 的 extent 可能大于 targetSize，必须裁剪确保模型输入尺寸精确
         let resultImage = scaledImage.composited(over: background)
+            .cropped(to: CGRect(origin: .zero, size: targetSize))
         
         return LetterboxInfo(
             image: resultImage,
@@ -556,64 +569,84 @@ final class ObjectDetectionService {
                 return []
             }
             
+            // Pre-compute English keyword once (outside the loop)
+            let normalizedKeyword = searchKeyword.lowercased()
+            let englishKeyword = ObjectTranslation.getEnglishName(for: searchKeyword)?.lowercased()
+            
             // Map observations back to original image space
             let results = observations.compactMap { observation -> RecognitionResult? in
                 guard let topLabel = observation.labels.first else { return nil }
-                if topLabel.confidence < currentThreshold { return nil }
                 
-                // 关键词匹配
-                var isMatch = true
-                if !searchKeyword.isEmpty {
-                    let normalizedKeyword = searchKeyword.lowercased()
-                    let label = topLabel.identifier.lowercased()
-                    isMatch = label.contains(normalizedKeyword) || normalizedKeyword.contains(label)
-                    if !isMatch {
-                        if let english = ObjectTranslation.getEnglishName(for: searchKeyword)?.lowercased() {
-                            isMatch = label.contains(english) || english.contains(label)
+                // 关键词匹配：遍历所有候选标签，找到最佳匹配
+                // YOLO-World 对每个检测框返回多个标签候选，最佳匹配可能不是 top-1
+                var matchedLabel: VNClassificationObservation? = nil
+                
+                if searchKeyword.isEmpty {
+                    // 无关键词时，使用 top-1 标签
+                    if topLabel.confidence >= currentThreshold {
+                        matchedLabel = topLabel
+                    }
+                } else {
+                    // 有关键词时，在所有候选标签中查找匹配
+                    for candidateLabel in observation.labels {
+                        if candidateLabel.confidence < currentThreshold { continue }
+                        let label = candidateLabel.identifier.lowercased()
+                        
+                        // 直接匹配 (英文输入)
+                        if label == normalizedKeyword || label.contains(normalizedKeyword) || normalizedKeyword.contains(label) {
+                            matchedLabel = candidateLabel
+                            break
+                        }
+                        
+                        // 翻译匹配 (中文输入)
+                        if let english = englishKeyword {
+                            if label == english || label.contains(english) || english.contains(label) {
+                                matchedLabel = candidateLabel
+                                break
+                            }
                         }
                     }
                 }
                 
-                if isMatch {
-                    // Coordinate Mapping
-                    // Vision Box (0-1 in Target Square) -> Pixel in Target
-                    let box = observation.boundingBox
-                    
-                    // Vision origin is Bottom-Left
-                    // CIImage origin is Bottom-Left
-                    // Perfect match.
-                    
-                    let x_pixel_target = box.origin.x * targetSize.width
-                    let y_pixel_target = box.origin.y * targetSize.height
-                    let w_pixel_target = box.width * targetSize.width
-                    let h_pixel_target = box.height * targetSize.height
-                    
-                    // Remove Padding
-                    let x_pixel_new = x_pixel_target - info.offset.x
-                    let y_pixel_new = y_pixel_target - info.offset.y
-                    
-                    // Un-scale
-                    let x_pixel_orig = x_pixel_new / info.scale
-                    let y_pixel_orig = y_pixel_new / info.scale
-                    let w_pixel_orig = w_pixel_target / info.scale
-                    let h_pixel_orig = h_pixel_target / info.scale
-                    
-                    // Normalize to Original Size
-                    let normRect = CGRect(
-                        x: x_pixel_orig / info.originalSize.width,
-                        y: y_pixel_orig / info.originalSize.height,
-                        width: w_pixel_orig / info.originalSize.width,
-                        height: h_pixel_orig / info.originalSize.height
-                    )
-                    
-                    return RecognitionResult(
-                        text: topLabel.identifier,
-                        boundingBox: normRect,
-                        confidence: topLabel.confidence,
-                        type: .object
-                    )
-                }
-                return nil
+                guard let bestLabel = matchedLabel else { return nil }
+                
+                // Coordinate Mapping
+                // Vision Box (0-1 in Target Square) -> Pixel in Target
+                let box = observation.boundingBox
+                
+                // Vision origin is Bottom-Left
+                // CIImage origin is Bottom-Left
+                // Perfect match.
+                
+                let x_pixel_target = box.origin.x * targetSize.width
+                let y_pixel_target = box.origin.y * targetSize.height
+                let w_pixel_target = box.width * targetSize.width
+                let h_pixel_target = box.height * targetSize.height
+                
+                // Remove Padding
+                let x_pixel_new = x_pixel_target - info.offset.x
+                let y_pixel_new = y_pixel_target - info.offset.y
+                
+                // Un-scale
+                let x_pixel_orig = x_pixel_new / info.scale
+                let y_pixel_orig = y_pixel_new / info.scale
+                let w_pixel_orig = w_pixel_target / info.scale
+                let h_pixel_orig = h_pixel_target / info.scale
+                
+                // Normalize to Original Size
+                let normRect = CGRect(
+                    x: x_pixel_orig / info.originalSize.width,
+                    y: y_pixel_orig / info.originalSize.height,
+                    width: w_pixel_orig / info.originalSize.width,
+                    height: h_pixel_orig / info.originalSize.height
+                )
+                
+                return RecognitionResult(
+                    text: bestLabel.identifier,
+                    boundingBox: normRect,
+                    confidence: bestLabel.confidence,
+                    type: .object
+                )
             }
             
             var finalResults = results
