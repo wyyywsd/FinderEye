@@ -196,7 +196,7 @@ The export script will:
 
 ---
 
-## � Roadmap
+## 🗺 Roadmap
 
 - [x] Real-time OCR text search
 - [x] Open-vocabulary object detection
